@@ -1,7 +1,7 @@
 import React, {Component, Fragment} from 'react';
 
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 // import styles from './styles';
 
 export default class App extends Component {
@@ -992,6 +992,7 @@ export default class App extends Component {
             <View style={{flex: 1}}>
                 <MapView
                     style={{flex: 1}}
+                    provider={PROVIDER_GOOGLE}
                     region={{
                         latitude: -23.5436226,
                         longitude: -46.6514515,
