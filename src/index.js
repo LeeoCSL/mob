@@ -7,10 +7,6 @@ import linhaVermelha from './linhas/linhaVermelha/LinhaVermelha';
 
 const jsonVermelha = require('./linhas/linhaVermelha/linha-vermelha');
 
-
-
-
-
 const linhas = jsonVermelha.features.map(estacao => (
         estacao.geometry.coordinates.map(coordenada => (
                     // console.log(coordenada)
@@ -78,8 +74,6 @@ export default class App extends Component {
     render(){
         const mostra = this.state.mostraInfo;
 
-       
-       
         const marcas = this.state.coords.map(
             coord => (
                 <Marker 
