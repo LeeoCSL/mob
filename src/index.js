@@ -3,54 +3,45 @@ import React, {Component, Fragment} from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 // import styles from './styles';
-import linhaVermelha from './linhas/linhaVermelha/LinhaVermelha';
+import api from './services/api';
+import linhas from './linhas/criaLinhas';
 
-const jsonVermelha = require('./linhas/linhaVermelha/linha-vermelha');
+// import coordsRuby from './linhas/criaLinhas/coordsRuby';
+// import coordsVermelha from './linhas/criaLinhas/coordsVermelha';
+// import coordsAmarela from './linhas/criaLinhas/coordsAmarela';
+// import coordsAzul from './linhas/criaLinhas/coordsAzul';
+// import coordsDiamante from './linhas/criaLinhas/coordsDiamante';
 
-const linhas = jsonVermelha.features.map(estacao => (
-        estacao.geometry.coordinates.map(coordenada => (
-                    // console.log(coordenada)
-                {latitude: coordenada[1],
-                longitude: coordenada[0]}
-            )
-        )
-   
-   )
-)
+const coordsRuby = linhas.coordsRuby;
+const coordsVermelha = linhas.coordsVermelha;
+const coordsAmarela = linhas.coordsAmarela;
+const coordsAzul = linhas.coordsAzul;
+const coordsDiamante = linhas.coordsDiamante;
+const coordsCoral = linhas.coordsCoral;
+const coordsEsmeralda = linhas.coordsEsmeralda;
+const coordsJade = linhas.coordsJade;
+const coordsLilas = linhas.coordsLilas;
+const coordsPrata = linhas.coordsPrata;
+const coordsSafira = linhas.coordsSafira;
+const coordsTurquesa = linhas.coordsTurquesa;
+const coordsVerde = linhas.coordsVerde;
 
-const coords = 
-        linhas.map(cord => (
-            <Polyline
-                    strokeColor={'#f00'}
-                    strokeWidth={6}
-                    coordinates={cord}
-                            >
-            { console.log('coord', cord)}
+import marcas from './markers/markers';
 
-                            </Polyline>
-            )
-        )
-    // console.log("linhas", linhas)
-
+const markers = marcas;
 export default class App extends Component {
 
     state = {
-        coords:[
-            {
-                latitude: -23.5391515,
-                longitude: -46.651456,
-                nome: 'republica'
-            },
-            {
-                latitude: -23.5380181,
-                longitude: -46.6463978,
-                nome: 'santa cecilia'
-            }
-        ],
         mostraInfo: false,
-        nomeEst: null,
-        
-            
+        nomeEst: null,   
+        data: ''  
+    }
+
+    async componentDidMount(){
+        // this.subscribeToEvents();
+        const response = await api.get("pontos");
+        this.setState({data: response.data});
+        console.log('funcionou');
     }
 
     cliqueRepublica = (nome) =>  {
@@ -61,34 +52,41 @@ export default class App extends Component {
         // })
     }
 
-   
-
     marcarEstacoes = () => {
         this.state.coords.map(
-            
             )
-        
     }
-  
 
-    render(){
-        const mostra = this.state.mostraInfo;
-
-        const marcas = this.state.coords.map(
-            coord => (
+    pegarMarkers = () => {
+        const dados = this.state.data;
+        const pontos = dados.map(
+            ponto => (
                 <Marker 
                     coordinate={{
-                        latitude:coord.latitude ,
-                        longitude: coord.longitude,
+                        latitude: ponto.localizacao.coordinates[1],
+                        longitude: ponto.localizacao.coordinates[0],
                     }}
-                    anchor={{ x:0, y:0 }} 
-                    onPress={() => {this.setState({mostraInfo:true, nomeEst: coord.nome})}}
+                    anchor={{ x:1, y:1 }} 
                     >
-                    {/* {console.log(coord.nome)} */}
+                    {console.log(ponto.nome)}
                 </Marker>
+            )
         )
-        )
+
+
+
+        const linhaRuby = jsonRuby.features.map(estacao => (
+            estacao.geometry.coordinates.map(coordenada => (
+                    {latitude: coordenada[1],
+                    longitude: coordenada[0]}
+                ))))
+    }
+  
+    render(){
+        const mostra = this.state.mostraInfo;
+        
         return(
+            
             <View style={{flex: 1}}>
                 <MapView
                     style={{flex: 1}}
@@ -104,10 +102,21 @@ export default class App extends Component {
                     ref={el => this.mapView = el}
                         
                 >
-               {marcas}
-               {/* {console.log('aqui')} */}
-               {coords}
-               {console.log(coords)}
+                {/* {this.pegarMarkers} */}
+                {coordsRuby}
+                {coordsAmarela}
+                {coordsVermelha}
+                {coordsAzul}
+                {coordsDiamante}
+                {coordsCoral}
+                {coordsEsmeralda}
+                {coordsJade}
+                {coordsLilas}
+                {coordsPrata}
+                {coordsSafira}
+                {coordsTurquesa}
+                {coordsVerde}
+              
 
                {/* <Marker 
                     coordinate={{

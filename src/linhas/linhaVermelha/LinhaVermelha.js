@@ -1,6 +1,6 @@
 const linhaVermelha = [
     CorinthiansAteArtur = [
-        {
+        { 
         longitude: -46.471046805381775,
         latitude: -23.5423378052293,
     }, {
