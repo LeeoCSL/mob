@@ -39,6 +39,7 @@ export default class App extends Component {
 
     async componentDidMount(){
         // this.subscribeToEvents();
+        console.log('aq');
         const response = await api.get("pontos");
         this.setState({data: response.data});
         console.log('funcionou');
@@ -74,12 +75,6 @@ export default class App extends Component {
         )
 
 
-
-        const linhaRuby = jsonRuby.features.map(estacao => (
-            estacao.geometry.coordinates.map(coordenada => (
-                    {latitude: coordenada[1],
-                    longitude: coordenada[0]}
-                ))))
     }
   
     render(){
