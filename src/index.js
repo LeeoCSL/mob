@@ -39,9 +39,9 @@ export default class App extends Component {
 
     async componentDidMount(){
         // this.subscribeToEvents();
-        const response = await api.get("pontos");
+        const response = await api.get("/estacao/pontos");
+        console.log(response.data.data);
         this.setState({data: response.data});
-        console.log('funcionou');
     }
 
     cliqueRepublica = (nome) =>  {
