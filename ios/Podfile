@@ -11,6 +11,8 @@ target 'mob' do
   target 'mob-tvOSTests' do
     inherit! :search_paths
     # Pods for testing
+    pod 'RNGestureHandler', :path => '../node_modules/react-native-gesture-handler'
+
   end
 
   target 'mobTests' do
