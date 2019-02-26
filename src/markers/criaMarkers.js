@@ -12,6 +12,7 @@ if(response.data > 0)
                         longitude: ponto.localizacao.coordinates[0],
                     }}
                     anchor={{ x:1, y:1 }}
+                    key={ponto.key}
                     >
                     {console.log(ponto.nome)}
                 </Marker>
