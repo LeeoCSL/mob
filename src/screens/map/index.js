@@ -5,8 +5,11 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  TextInput
+  TextInput,
+  Keyboard,
+  ScrollView
 } from "react-native";
+import SearchInput, { createFilter } from "react-native-search-filter";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
 import api from "../../services/api";
 import linhas from "../../linhas/criaLinhas";
@@ -26,6 +29,8 @@ const coordsSafira = linhas.coordsSafira;
 const coordsTurquesa = linhas.coordsTurquesa;
 const coordsVerde = linhas.coordsVerde;
 
+const KEYS_TO_FILTERS = ["nome"];
+
 export default class Map extends Component {
   static navigationOptions = {
     header: null
@@ -35,22 +40,29 @@ export default class Map extends Component {
     mostraInfo: "",
     nomeEst: null,
     region: {
-      latitude: -23.5436226,
-      longitude: -46.6514515,
+      latitude: -0.0,
+      longitude: -0.0,
       latitudeDelta: 0.0143,
       longitudeDelta: 0.0134
     },
     data: [],
-    estacoes: []
+    estacoes: [],
+    a: "",
+    searchTerm: "",
+    pontos: [],
+    scroll: "",
+    markers: false
   };
 
   async componentDidMount() {
     // this.subscribeToEvents();
-    console.log("response");
+    // console.log("response");
     const response = await api.get("/estacao/pontos");
-    console.log("response2");
+    // console.log("response2");
     console.log(response);
     this.setState({ data: response.data.data });
+
+    this.ohGod();
   }
 
   cliqueEst(nome, lat, long) {
@@ -72,57 +84,179 @@ export default class Map extends Component {
 
   pegarMarker() {
     if (this.state.data != 0) {
-      return this.state.data.map((ponto, index) => (
-        <Marker
-          coordinate={{
-            latitude: ponto.localizacao.coordinates[1],
-            longitude: ponto.localizacao.coordinates[0]
-          }}
-          anchor={{ x: 1, y: 1 }}
-          key={index}
-          onPress={() =>
-            this.cliqueEst(
-              ponto.nome,
-
-              ponto.localizacao.coordinates[1],
-              ponto.localizacao.coordinates[0]
-            )
-          }
-        >
-          {/* {console.log(ponto.nome)} */}
-          {/* {this.setState({ estacoes: this.state.estacoes.concat(ponto.nome) });} */}
-        </Marker>
-      ));
+      return this.state.data.map((ponto, index) => {
+        console.log(ponto.Status);
+        if (ponto.Status) {
+          return (
+            <Marker
+              coordinate={{
+                latitude: ponto.localizacao.coordinates[1],
+                longitude: ponto.localizacao.coordinates[0]
+              }}
+              anchor={{ x: 1, y: 1 }}
+              key={index}
+              onPress={() =>
+                this.cliqueEst(
+                  ponto.nome,
+                  ponto.localizacao.coordinates[1],
+                  ponto.localizacao.coordinates[0]
+                )
+              }
+            />
+          );
+        } else {
+          return (
+            <Marker
+              coordinate={{
+                latitude: ponto.localizacao.coordinates[1],
+                longitude: ponto.localizacao.coordinates[0]
+              }}
+              pinColor={"#00f"}
+              anchor={{ x: 1, y: 1 }}
+              key={index}
+              onPress={() =>
+                this.cliqueEst(
+                  ponto.nome,
+                  ponto.localizacao.coordinates[1],
+                  ponto.localizacao.coordinates[0]
+                )
+              }
+            />
+          );
+        }
+      });
     }
   }
 
-  // populaEstacoes = nome => {
-  //   let array = this.state.estacoes.concat(nome);
-  //   this.setState({ estacoes: array });
-  // };
+  populaEstacoes = nome => {
+    let array = this.state.estacoes.concat(nome);
+    this.setState({ estacoes: array });
+  };
 
   handleInputPesquisa = estacaoPesquisa => {
     this.setState({ estacaoPesquisa });
   };
 
   pesquisar() {
-    const pesq = this.state.estacaoPesquisa;
-    const stations = this.state.estacoes;
-    for (let i = 0; i < stations.length; i++) {
-      if (pesq == stations[i]) {
-        console.log(stations[i]);
-        return;
+    let p = this.rodarPesquisa();
+    console.log("p", p);
+    for (let i = 0; i < p.length; i++) {
+      if (this.state.estacaoPesquisa == p[i].nome) {
+        this.setState({
+          mostraInfo: true,
+          nomeEst: p[i].nome,
+          region: {
+            latitude: p[i].localizacao.coordinates[1],
+            longitude: p[i].localizacao.coordinates[0],
+            latitudeDelta: 0.0143,
+            longitudeDelta: 0.0134
+          }
+        });
       }
     }
-    console.log("nao encontramos essa estação");
+  }
+
+  // if (this.state.estacaoPesquisa == p.nome) {
+  //   console.log("chegou aq");
+  //   this.setState({
+  //     mostraInfo: true,
+  //     nomeEst: p.nome,
+  //     region: {
+  //       latitude: p.localizacao.coordinates[1],
+  //       longitude: p.localizacao.coordinates[0],
+  //       latitudeDelta: 0.0143,
+  //       longitudeDelta: 0.0134
+  //     }
+  //   });
+  findCoordinates = () => {
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        console.log(position.coords.latitude);
+        console.log(position.coords.longitude);
+        const location = JSON.stringify(position);
+        this.setState({
+          region: {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            latitudeDelta: 0.0143,
+            longitudeDelta: 0.0134
+          },
+          a: true
+        });
+      },
+      error => Alert.alert(error.message),
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+    );
+  };
+
+  searchUpdated(term) {
+    this.setState({ searchTerm: term });
+    if (term.length > 0) {
+      this.setState({ scroll: true });
+    } else {
+      this.setState({ scroll: false });
+    }
+  }
+
+  rodarPesquisa() {
+    if (this.state.data != 0) {
+      return this.state.data.map(ponto => ponto);
+    }
+  }
+
+  ohGod() {
+    let ponto = this.rodarPesquisa();
+    console.log("ponto", ponto);
+
+    this.setState({ pontos: ponto }, () =>
+      console.log("eita", this.state.pontos)
+    );
+    // console.log("aaaa", nomes);
+    // return nomes;
+  }
+
+  godPlease(ponto) {
+    this.setState({
+      mostraInfo: true,
+      nomeEst: ponto.nome,
+      region: {
+        latitude: ponto.localizacao.coordinates[1],
+        longitude: ponto.localizacao.coordinates[0],
+        latitudeDelta: 0.0143,
+        longitudeDelta: 0.0134
+      }
+    });
+  }
+
+  mostraMarker() {
+    // console.log("esse vai da undefined", this.mapView.props.longitudeDelta);
+    // console.log("esse vai da certo", this.mapView.props.region.latitudeDelta);
+    longD = this.mapView.props.region.longitudeDelta;
+    latD = this.mapView.props.region.latitudeDelta;
+    if (this.state.markers) {
+      this.setState({
+        markers: false
+      });
+    } else {
+      this.setState({
+        markers: true
+      });
+    }
   }
 
   render() {
     const republica = "republica";
     const mostra = this.state.mostraInfo;
+    const pontos = this.state.pontos;
+    const scroll = this.state.scroll;
+    const filteredPontos = pontos.filter(
+      createFilter(this.state.searchTerm, KEYS_TO_FILTERS)
+    );
 
     return (
       <View style={{ flex: 1 }}>
+        {this.state.a ? null : this.findCoordinates()}
+
         <MapView
           style={{ flex: 1 }}
           provider={PROVIDER_GOOGLE}
@@ -131,8 +265,8 @@ export default class Map extends Component {
           loadingEnabled
           ref={el => (this.mapView = el)}
         >
-          {this.pegarMarker()}
-          {console.log(this.state.estacoes)}
+          {this.state.markers ? this.pegarMarker() : null}
+
           {coordsRuby}
           {coordsAmarela}
           {coordsVermelha}
@@ -147,9 +281,23 @@ export default class Map extends Component {
           {coordsTurquesa}
           {coordsVerde}
         </MapView>
-
-        <View style={styles.inputView}>
-          <TextInput
+        <TouchableOpacity
+          style={{ backgroundColor: "transparent" }}
+          onPress={() => {
+            this.mostraMarker();
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 40,
+              alignSelf: "flex-end",
+              backgroundColor: "transparent"
+            }}
+          >
+            Ligar
+          </Text>
+        </TouchableOpacity>
+        {/* <TextInput
             placeholder="pesquisar estação"
             style={styles.input}
             onChangeText={this.handleInputPesquisa}
@@ -157,8 +305,32 @@ export default class Map extends Component {
           />
           <TouchableOpacity onPress={() => this.pesquisar()}>
             <Text style={styles.btnPesquisa}> > </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+        <View style={styles.inputView}>
+          <SearchInput
+            style={styles.input}
+            onChangeText={term => {
+              this.searchUpdated(term);
+            }}
+            style={styles.searchInput}
+            placeholder="Digite a estação"
+          />
+
+          {scroll ? (
+            <ScrollView style={styles.scrollStyle}>
+              {filteredPontos.map(pontos => {
+                return (
+                  <TouchableOpacity onPress={() => this.godPlease(pontos)}>
+                    <View>
+                      <Text>{pontos.nome}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          ) : null}
         </View>
+
         {mostra ? (
           <View style={styles.infoEst}>
             <Text style={styles.title}>{this.state.nomeEst}</Text>
@@ -171,7 +343,9 @@ export default class Map extends Component {
               >
                 <Text style={styles.optNao}>Não</Text>
               </TouchableOpacity>
-              <TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => this.props.navigation.navigate("Trouble")}
+              >
                 <Text style={styles.optSim}>Sim</Text>
               </TouchableOpacity>
             </View>
@@ -223,14 +397,15 @@ const styles = StyleSheet.create({
     fontSize: 16
   },
   inputView: {
-    flexDirection: "row",
-    backgroundColor: "rgba(0,0,0,0)",
+    backgroundColor: "white",
     position: "absolute",
     top: 0,
     left: 5,
     right: 5,
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+    borderWidth: 2,
+    margin: 10
   },
   input: {
     flex: 2,
@@ -241,7 +416,6 @@ const styles = StyleSheet.create({
     marginRight: 10,
     fontSize: 18,
     borderWidth: 1,
-    borderRadius: 10,
     borderColor: "#000",
     backgroundColor: "white"
   },
@@ -250,5 +424,11 @@ const styles = StyleSheet.create({
     fontSize: 30,
     alignSelf: "center",
     marginTop: 20
+  },
+  scrollStyle: {
+    marginTop: 0,
+    flexWrap: "wrap",
+    flexGrow: 0,
+    maxHeight: 100
   }
 });
